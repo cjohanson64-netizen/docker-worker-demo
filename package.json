@@ -1,0 +1,13 @@
+{
+  "name": "docker-queue-demo",
+  "version": "1.0.0",
+  "description": "A tiny producer-worker queue demo with Docker",
+  "main": "worker.js",
+  "scripts": {
+    "producer": "node producer.js",
+    "worker": "node worker.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -1,0 +1,12 @@
+services:
+  producer:
+    build: .
+    command: npm run producer
+    volumes:
+      - .:/app
+
+  worker:
+    build: .
+    command: npm run worker
+    volumes:
+      - .:/app
