@@ -6,8 +6,5 @@
   "scripts": {
     "producer": "node producer.js",
     "worker": "node worker.js"
-  },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
   }
 }
