@@ -1,24 +1,20 @@
-import {
-  pageKey,
-  urlValue,
-  processedAtValue,
-  titleValue,
-  hasTitleValue,
-  hasMetaDescriptionValue,
-  contentLengthValue
-} from "./pageFacts.generated.tat"
+import { pageKey, urlValue, processedAtValue, titleValue, hasTitleValue, hasMetaDescriptionValue, contentLengthValue, isThinContentValue } from "./pageFacts.generated.tat"
 
 pageNode = <{ kind: "page", key: pageKey }>
 urlNode = <{ kind: "resource", key: "url", value: urlValue }>
 timestampNode = <{ kind: "metric", key: "processed_at", value: processedAtValue }>
 lengthNode = <{ kind: "metric", key: "content_length", value: contentLengthValue }>
 titleNode = <{ kind: "metadata", key: "title", value: titleValue }>
-metaNode = <{ kind: "metadata", key: "meta_description", value: hasMetaDescriptionValue }>
 titlePresenceNode = <{ kind: "signal", key: "has_title", value: hasTitleValue }>
+metaPresenceNode = <{ kind: "signal", key: "has_meta_description", value: hasMetaDescriptionValue }>
+thinContentNode = <{ kind: "signal", key: "is_thin_content", value: isThinContentValue }>
+missingTitleWarning = <{ kind: "warning", key: "missing_title", severity: "high" }>
+missingMetaWarning = <{ kind: "warning", key: "missing_meta_description", severity: "medium" }>
+thinContentWarning = <{ kind: "warning", key: "thin_content", severity: "medium" }>
 
 @seed:
-  nodes: [pageNode, urlNode, timestampNode, lengthNode, titleNode, metaNode, titlePresenceNode]
-  edges: [[pageNode : "sourced_from" : urlNode], [pageNode : "evaluated_at" : timestampNode], [pageNode : "has_metric" : lengthNode], [pageNode : "has" : titleNode], [pageNode : "has" : metaNode], [pageNode : "signals" : titlePresenceNode]]
+  nodes: [pageNode, urlNode, timestampNode, lengthNode, titleNode, titlePresenceNode, metaPresenceNode, thinContentNode, missingTitleWarning, missingMetaWarning, thinContentWarning]
+  edges: [[pageNode : "sourced_from" : urlNode], [pageNode : "evaluated_at" : timestampNode], [pageNode : "has_metric" : lengthNode], [pageNode : "has" : titleNode], [pageNode : "signals" : titlePresenceNode], [pageNode : "signals" : metaPresenceNode], [pageNode : "signals" : thinContentNode]]
   state: {}
   meta: {}
   root: pageNode
@@ -26,4 +22,4 @@ titlePresenceNode = <{ kind: "signal", key: "has_title", value: hasTitleValue }>
 pageGraph := @seed
   <> @project(format: "graph")
 
-export { pageGraph, pageNode, titleNode, metaNode, lengthNode, titlePresenceNode }
+export { pageNode, pageGraph, titlePresenceNode, metaPresenceNode, thinContentNode, missingTitleWarning, missingMetaWarning, thinContentWarning }

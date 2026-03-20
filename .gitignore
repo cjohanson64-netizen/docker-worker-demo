@@ -2,3 +2,4 @@ node_modules/
 .DS_Store
 tat-lib/node_modules/
 tat/pageFacts.generated.tat
+tat/generated/

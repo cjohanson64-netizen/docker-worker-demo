@@ -1,3 +1,5 @@
+const { graphToViewModel } = require("./src/graphToViewModel");
+
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -70,6 +72,10 @@ async function processJob(job) {
     };
 
     const tat = await runTatEvaluation(result);
+    const viewModel = graphToViewModel(tat.graph, result);
+
+    console.log(`[${WORKER_NAME}] View Model:`);
+    console.log(JSON.stringify(viewModel, null, 2));
 
     console.log(`[${WORKER_NAME}] Raw Result:`);
     console.log(JSON.stringify(result, null, 2));
@@ -83,7 +89,10 @@ async function processJob(job) {
     console.log(`[${WORKER_NAME}] Rules Graph:`);
     console.log(JSON.stringify(tat.graph, null, 2));
   } catch (error) {
-    console.error(`[${WORKER_NAME}] Failed to process ${job.url}:`, error.message);
+    console.error(
+      `[${WORKER_NAME}] Failed to process ${job.url}:`,
+      error.message,
+    );
   }
 
   console.log(`[${WORKER_NAME}] Finished job ${job.id}`);
@@ -104,7 +113,10 @@ async function startWorker() {
     try {
       await processJob(nextJob);
     } catch (error) {
-      console.error(`[${WORKER_NAME}] Job ${nextJob.id} failed:`, error.message);
+      console.error(
+        `[${WORKER_NAME}] Job ${nextJob.id} failed:`,
+        error.message,
+      );
     }
   }
 }

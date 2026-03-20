@@ -5,19 +5,19 @@ const { executeTatModule } = require(path.join(
   "../tat-lib/dist/runtime/index.js"
 ));
 
-const { writeTatFactsModule } = require("./buildTatInput");
-
-const RULES_ENTRY_PATH = path.join(__dirname, "../tat/pageRules.tat");
+const { writeTatModules } = require("./buildTatInput");
 
 async function runTatEvaluation(result) {
-  const generated = await writeTatFactsModule(result);
-  const loadedModule = executeTatModule(RULES_ENTRY_PATH);
+  const generated = await writeTatModules(result);
+  const loadedModule = executeTatModule(generated.rulesPath);
 
   const rulesGraphAsset = loadedModule.exports.get("rulesGraph");
 
   return {
-    factsPath: generated.path,
-    factsSource: generated.source,
+    factsPath: generated.factsPath,
+    factsSource: generated.factsSource,
+    analysisPath: generated.analysisPath,
+    rulesPath: generated.rulesPath,
     modulePath: loadedModule.path,
     exports: [...loadedModule.exports.keys()],
     graph: rulesGraphAsset ? rulesGraphAsset.value : null,

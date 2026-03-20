@@ -1,33 +1,39 @@
-import {
-  pageGraph,
-  pageNode,
-  titleNode,
-  metaNode,
-  lengthNode,
-  titlePresenceNode
-} from "./pageAnalysis.tat"
+import { pageNode, pageGraph, titlePresenceNode, metaPresenceNode, thinContentNode, missingTitleWarning, missingMetaWarning, thinContentWarning } from "./pageAnalysis.tat"
 
-missingTitleWarning = <{ kind: "warning", key: "missing_title", severity: "high" }>
-missingMetaWarning = <{ kind: "warning", key: "missing_meta_description", severity: "medium" }>
-thinContentWarning = <{ kind: "warning", key: "thin_content", severity: "medium" }>
+attachMissingTitle := @action {
+  guard:
+    to.value.value === false
 
-@seed:
-  nodes: [pageNode, missingTitleWarning, missingMetaWarning, thinContentWarning]
-  edges: []
-  state: {}
-  meta: {}
-  root: pageNode
+  pipeline:
+    -> @graft.branch(from, "warns", missingTitleWarning)
+}
 
-warningGraph := @seed
-  <> @project(format: "graph")
+attachMissingMeta := @action {
+  guard:
+    to.value.value === false
+
+  pipeline:
+    -> @graft.branch(from, "warns", missingMetaWarning)
+}
+
+attachThinContent := @action {
+  guard:
+    to.value.value === true
+
+  pipeline:
+    -> @graft.branch(from, "warns", thinContentWarning)
+}
+
+titleCheck = <pageNode.attachMissingTitle.titlePresenceNode>
+metaCheck = <pageNode.attachMissingMeta.metaPresenceNode>
+thinCheck = <pageNode.attachThinContent.thinContentNode>
 
 rulesGraph := @compose([
-  pageGraph,
-  warningGraph
+  pageGraph
 ], merge: pageNode)
-  -> @graft.branch(pageNode, "warns", missingTitleWarning)
-  -> @graft.branch(pageNode, "warns", missingMetaWarning)
-  -> @graft.branch(pageNode, "warns", thinContentWarning)
+  -> @apply(titleCheck)
+  -> @apply(metaCheck)
+  -> @apply(thinCheck)
   <> @project(format: "graph")
 
 export { rulesGraph }
