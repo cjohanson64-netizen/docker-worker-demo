@@ -1,0 +1,33 @@
+import {
+  pageGraph,
+  pageNode,
+  titleNode,
+  metaNode,
+  lengthNode,
+  titlePresenceNode
+} from "./pageAnalysis.tat"
+
+missingTitleWarning = <{ kind: "warning", key: "missing_title", severity: "high" }>
+missingMetaWarning = <{ kind: "warning", key: "missing_meta_description", severity: "medium" }>
+thinContentWarning = <{ kind: "warning", key: "thin_content", severity: "medium" }>
+
+@seed:
+  nodes: [pageNode, missingTitleWarning, missingMetaWarning, thinContentWarning]
+  edges: []
+  state: {}
+  meta: {}
+  root: pageNode
+
+warningGraph := @seed
+  <> @project(format: "graph")
+
+rulesGraph := @compose([
+  pageGraph,
+  warningGraph
+], merge: pageNode)
+  -> @graft.branch(pageNode, "warns", missingTitleWarning)
+  -> @graft.branch(pageNode, "warns", missingMetaWarning)
+  -> @graft.branch(pageNode, "warns", thinContentWarning)
+  <> @project(format: "graph")
+
+export { rulesGraph }

@@ -2,7 +2,9 @@ const fs = require("fs/promises");
 const path = require("path");
 
 const QUEUE_PATH = path.join(__dirname, "queue.json");
-const fetchPage = globalThis.fetch;
+const WORKER_NAME = process.env.HOSTNAME || "worker";
+
+const { runTatEvaluation } = require("./src/runTatEvaluation");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -10,7 +12,7 @@ function sleep(ms) {
 
 function analyzePage(html) {
   const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-  const title = titleMatch ? titleMatch[1] : null;
+  const title = titleMatch ? titleMatch[1].trim() : null;
 
   const hasTitle = !!title;
   const contentLength = html.length;
@@ -51,15 +53,11 @@ async function getNextJob() {
 }
 
 async function processJob(job) {
-  console.log(`\n[Worker] Starting job ${job.id}`);
-  console.log(`[Worker] Fetching URL: ${job.url}`);
-
-  if (typeof fetchPage !== "function") {
-    throw new Error("Built-in fetch is unavailable in this Node runtime");
-  }
+  console.log(`\n[${WORKER_NAME}] Starting job ${job.id}`);
+  console.log(`[${WORKER_NAME}] Fetching URL: ${job.url}`);
 
   try {
-    const response = await fetchPage(job.url);
+    const response = await globalThis.fetch(job.url);
     const html = await response.text();
 
     const analysis = analyzePage(html);
@@ -71,22 +69,34 @@ async function processJob(job) {
       processedAt: new Date().toISOString(),
     };
 
-    console.log("[Worker] Result:", result);
+    const tat = await runTatEvaluation(result);
+
+    console.log(`[${WORKER_NAME}] Raw Result:`);
+    console.log(JSON.stringify(result, null, 2));
+
+    console.log(`[${WORKER_NAME}] Generated Facts Module:`);
+    console.log(tat.factsSource);
+
+    console.log(`[${WORKER_NAME}] TAT Exports:`);
+    console.log(tat.exports);
+
+    console.log(`[${WORKER_NAME}] Rules Graph:`);
+    console.log(JSON.stringify(tat.graph, null, 2));
   } catch (error) {
-    console.error(`[Worker] Failed to fetch ${job.url}:`, error.message);
+    console.error(`[${WORKER_NAME}] Failed to process ${job.url}:`, error.message);
   }
 
-  console.log(`[Worker] Finished job ${job.id}`);
+  console.log(`[${WORKER_NAME}] Finished job ${job.id}`);
 }
 
 async function startWorker() {
-  console.log("[Worker] Worker started. Polling for jobs...");
+  console.log(`[${WORKER_NAME}] Worker started. Polling for jobs...`);
 
   while (true) {
     const nextJob = await getNextJob();
 
     if (!nextJob) {
-      console.log("[Worker] No jobs found. Sleeping...");
+      console.log(`[${WORKER_NAME}] No jobs found. Sleeping...`);
       await sleep(2000);
       continue;
     }
@@ -94,12 +104,12 @@ async function startWorker() {
     try {
       await processJob(nextJob);
     } catch (error) {
-      console.error(`[Worker] Job ${nextJob.id} failed:`, error.message);
+      console.error(`[${WORKER_NAME}] Job ${nextJob.id} failed:`, error.message);
     }
   }
 }
 
 startWorker().catch((error) => {
-  console.error("[Worker] Fatal error:", error);
+  console.error(`[${WORKER_NAME}] Fatal error:`, error);
   process.exit(1);
 });

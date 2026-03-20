@@ -1,0 +1,29 @@
+import {
+  pageKey,
+  urlValue,
+  processedAtValue,
+  titleValue,
+  hasTitleValue,
+  hasMetaDescriptionValue,
+  contentLengthValue
+} from "./pageFacts.generated.tat"
+
+pageNode = <{ kind: "page", key: pageKey }>
+urlNode = <{ kind: "resource", key: "url", value: urlValue }>
+timestampNode = <{ kind: "metric", key: "processed_at", value: processedAtValue }>
+lengthNode = <{ kind: "metric", key: "content_length", value: contentLengthValue }>
+titleNode = <{ kind: "metadata", key: "title", value: titleValue }>
+metaNode = <{ kind: "metadata", key: "meta_description", value: hasMetaDescriptionValue }>
+titlePresenceNode = <{ kind: "signal", key: "has_title", value: hasTitleValue }>
+
+@seed:
+  nodes: [pageNode, urlNode, timestampNode, lengthNode, titleNode, metaNode, titlePresenceNode]
+  edges: [[pageNode : "sourced_from" : urlNode], [pageNode : "evaluated_at" : timestampNode], [pageNode : "has_metric" : lengthNode], [pageNode : "has" : titleNode], [pageNode : "has" : metaNode], [pageNode : "signals" : titlePresenceNode]]
+  state: {}
+  meta: {}
+  root: pageNode
+
+pageGraph := @seed
+  <> @project(format: "graph")
+
+export { pageGraph, pageNode, titleNode, metaNode, lengthNode, titlePresenceNode }
